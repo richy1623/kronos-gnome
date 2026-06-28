@@ -1,0 +1,6 @@
+# List of source files containing translatable strings.
+# Please keep this file sorted alphabetically.
+data/io.richard.kronos.desktop.in
+data/io.richard.kronos.metainfo.xml.in
+data/io.richard.kronos.gschema.xml
+src/window.ui

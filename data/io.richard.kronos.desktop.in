@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Kronos
+Exec=kronos
+Icon=io.richard.kronos
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=GTK;
+StartupNotify=true
+DBusActivatable=true
