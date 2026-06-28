@@ -1,11 +1,10 @@
-
-use gettextrs::gettext;
 use adw::prelude::*;
 use adw::subclass::prelude::*;
+use gettextrs::gettext;
 use gtk::{gio, glib};
 
-use crate::config::VERSION;
 use crate::KronosWindow;
+use crate::config::VERSION;
 
 mod imp {
     use super::*;
@@ -26,6 +25,7 @@ mod imp {
             let obj = self.obj();
             obj.setup_gactions();
             obj.set_accels_for_action("app.quit", &["<control>q"]);
+            obj.set_accels_for_action("app.shortcuts", &["<control>comma"]);
         }
     }
 
@@ -73,7 +73,11 @@ impl KronosApplication {
         let about_action = gio::ActionEntry::builder("about")
             .activate(move |app: &Self, _, _| app.show_about())
             .build();
-        self.add_action_entries([quit_action, about_action]);
+        let shortcuts_action = gio::ActionEntry::builder("shortcuts")
+            .activate(move |app: &Self, _, _| app.show_shortcuts())
+            .build();
+
+        self.add_action_entries([quit_action, about_action, shortcuts_action]);
     }
 
     fn show_about(&self) {
@@ -90,5 +94,17 @@ impl KronosApplication {
             .build();
 
         about.present(Some(&window));
+    }
+
+    fn show_shortcuts(&self) {
+        let window = self.active_window().unwrap();
+
+        let builder = gtk::Builder::from_resource("/io/richard/kronos/shortcuts_dialog.ui");
+
+        let shortcuts_dialog: adw::ShortcutsDialog = builder
+            .object("shortcuts_dialog")
+            .expect("Could not find shortcuts_dialog ID in layout");
+
+        shortcuts_dialog.present(Some(&window));
     }
 }

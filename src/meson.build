@@ -1,10 +1,30 @@
 pkgdatadir = get_option('prefix') / get_option('datadir') / meson.project_name()
 gnome = import('gnome')
 
+# 1. Locate the blueprint-compiler on your system
+blueprint_compiler = find_program('blueprint-compiler', required: true)
+
+# Blueprint files
+blueprints = [
+    'window',
+    'shortcuts_dialog',
+]
+
+blueprint_targets = []
+foreach bp : blueprints
+    blueprint_targets += custom_target(
+        '@0@-ui'.format(bp),
+        input: '@0@.blp'.format(bp),
+        output: '@0@.ui'.format(bp),
+        command: [blueprint_compiler, 'compile', '--output', '@OUTPUT@', '@INPUT@'],
+    )
+endforeach
+
 gnome.compile_resources(
     'kronos',
     'kronos.gresource.xml',
     gresource_bundle: true,
+    dependencies: blueprint_targets,
     install: true,
     install_dir: pkgdatadir,
 )
@@ -37,7 +57,8 @@ else
     rust_target = 'debug'
 endif
 
-cargo_build = custom_target(
+# cargo_build
+custom_target(
     'cargo-build',
     build_by_default: true,
     build_always_stale: true,
