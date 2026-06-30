@@ -18,12 +18,15 @@ template $KronosWindow: Adw.ApplicationWindow {
       }
     }
 
-    content: Gtk.Label label {
-      label: _("Hello, World!");
+    content: Gtk.ScrolledWindow window {
+      hexpand: true;
+      vexpand: true;
 
-      styles [
-        "title-1",
-      ]
+      Gtk.Box calendar_times_grid {
+        orientation: vertical;
+        margin-top: 12;
+        margin-bottom: 12;
+      }
     };
   };
 }

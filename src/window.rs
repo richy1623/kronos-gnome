@@ -8,9 +8,12 @@ mod imp {
     #[derive(Debug, Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/richard/kronos/window.ui")]
     pub struct KronosWindow {
-        // This variable matches the name "label" from your blueprint file perfectly!
         #[template_child]
-        pub label: TemplateChild<gtk::Label>,
+        pub window: TemplateChild<gtk::ScrolledWindow>,
+        #[template_child]
+        pub calendar_times_grid: TemplateChild<gtk::Box>,
+
+        pub drag_and_drop_panel: Option<gtk::Overlay>,
     }
 
     #[glib::object_subclass]
@@ -35,6 +38,7 @@ mod imp {
 
             // Fire up our custom UI logic
             self.obj().setup_internal_logic();
+            self.obj().build_calendar_time_slots();
         }
     }
 
@@ -61,12 +65,51 @@ impl KronosWindow {
     // This is where you write your interactive features for the window!
     fn setup_internal_logic(&self) {
         // 1. Get access to the private UI struct layer
+        // let imp = self.imp();
+
+        // 2. Fetch the actual native GtkLabel instance
+        // let main_label = imp.label.get();
+
+        // // 3. You can now modify it dynamically from Rust!
+        // main_label.set_label("Hello from the updated Rust window!");
+    }
+
+    fn build_calendar_time_slots(&self) {
+        // 1. Get access to the private UI struct layer
         let imp = self.imp();
 
         // 2. Fetch the actual native GtkLabel instance
-        let main_label = imp.label.get();
+        let calendar_times_grid = imp.calendar_times_grid.get();
 
-        // 3. You can now modify it dynamically from Rust!
-        main_label.set_label("Hello from the updated Rust window!");
+        for hour in 0..24 {
+            let row_box = gtk::Box::builder()
+                .orientation(gtk::Orientation::Horizontal)
+                .height_request(60) // 60px represents exactly one hour block
+                .spacing(12)
+                .build();
+
+            let label_text = format!("{:02}:00", hour);
+            let time_label = gtk::Label::builder()
+                .label(&label_text)
+                .width_request(60)
+                .halign(gtk::Align::End)
+                .valign(gtk::Align::Start)
+                .margin_top(4)
+                .build();
+            time_label.add_css_class("caption");
+            time_label.add_css_class("dim-label");
+
+            let separator = gtk::Separator::builder()
+                .orientation(gtk::Orientation::Horizontal)
+                .hexpand(true)
+                .valign(gtk::Align::Start)
+                .margin_top(12)
+                .build();
+            separator.add_css_class("sidebar-separator");
+
+            row_box.append(&time_label);
+            row_box.append(&separator);
+            calendar_times_grid.append(&row_box);
+        }
     }
 }
