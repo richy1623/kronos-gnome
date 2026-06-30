@@ -1,4 +1,4 @@
 .overlay-box {
-    background-color: alpha(@accent_bg_color, 0.4);
+    background-color: alpha(var(--accent-bg-color), 0.4);
     border-radius: 12px; /* Smooth corners */
 }

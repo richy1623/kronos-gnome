@@ -2,8 +2,13 @@ use adw::subclass::prelude::*;
 use gtk::prelude::*;
 use gtk::{gio, glib};
 
+use crate::window::imp::{HOUR_HEIGHT, MINUTES_15_HEIGHT};
+
 mod imp {
     use super::*;
+
+    pub(crate) const HOUR_HEIGHT: f64 = 60.0;
+    pub(crate) const MINUTES_15_HEIGHT: i32 = 15;
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/richard/kronos/window.ui")]
@@ -12,7 +17,8 @@ mod imp {
         pub window: TemplateChild<gtk::ScrolledWindow>,
         #[template_child]
         pub calendar_times_grid: TemplateChild<gtk::Box>,
-        // pub drag_and_drop_panel: Option<gtk::Overlay>,
+        #[template_child]
+        pub transparent_dimmer: TemplateChild<adw::Bin>,
     }
 
     #[glib::object_subclass]
@@ -36,8 +42,8 @@ mod imp {
             self.parent_constructed();
 
             // Fire up our custom UI logic
-            self.obj().setup_internal_logic();
             self.obj().build_calendar_time_slots();
+            self.obj().setup_drag_area();
             // self.obj().build_drag_and_drop_panel();
         }
     }
@@ -63,12 +69,62 @@ impl KronosWindow {
     }
 
     // This is where you write your interactive features for the window!
-    fn setup_internal_logic(&self) {
+    fn setup_drag_area(&self) {
         // 1. Get access to the private UI struct layer
-        // let imp = self.imp();
+        let imp = self.imp();
 
         // 2. Fetch the actual native GtkLabel instance
-        // let main_label = imp.label.get();
+        let window = imp.window.get();
+        let transparent_dimmer = imp.transparent_dimmer.get();
+
+        let drag_gesture = gtk::GestureDrag::new();
+        drag_gesture.set_propagation_phase(gtk::PropagationPhase::Capture);
+
+        drag_gesture.connect_drag_begin(glib::clone!(
+            #[weak]
+            transparent_dimmer,
+            move |_gesture, _x_start, y_start| {
+                let y_start = y_start as i32;
+                // Snap to earlier 15 minutes
+                let start = y_start - y_start % (MINUTES_15_HEIGHT);
+                transparent_dimmer.set_margin_top(start);
+            }
+        ));
+
+        drag_gesture.connect_drag_update(glib::clone!(
+            #[weak]
+            transparent_dimmer,
+            move |_gesture, _offset_x, y_offset| {
+                let y_offset = y_offset as i32;
+                if y_offset < 0 {
+                    // Snap height to prior 15 minutes
+                    let height = -(y_offset - MINUTES_15_HEIGHT - y_offset % (MINUTES_15_HEIGHT));
+                    // Snap top to use new height
+                    let current_end =
+                        transparent_dimmer.margin_top() + transparent_dimmer.height_request();
+                    // Perform updates
+                    transparent_dimmer.set_margin_top(current_end - height);
+                    transparent_dimmer.set_height_request(height);
+                } else {
+                    // Snap to next 15 minutes
+                    let height = y_offset + MINUTES_15_HEIGHT - y_offset % (MINUTES_15_HEIGHT);
+                    transparent_dimmer.set_height_request(height);
+                }
+            }
+        ));
+
+        drag_gesture.connect_drag_end(move |_gesture, _offset_x, _offset_y| {
+            let current_start_hours = transparent_dimmer.margin_top() as f64 / HOUR_HEIGHT;
+            let current_end_hours = (transparent_dimmer.margin_top()
+                + transparent_dimmer.height_request()) as f64
+                / HOUR_HEIGHT;
+            println!(
+                "Publish new event: [{:02.02}-{:02.02}]",
+                current_start_hours, current_end_hours
+            );
+        });
+
+        window.add_controller(drag_gesture);
 
         // // 3. You can now modify it dynamically from Rust!
         // main_label.set_label("Hello from the updated Rust window!");
@@ -94,7 +150,6 @@ impl KronosWindow {
                 .width_request(60)
                 .halign(gtk::Align::End)
                 .valign(gtk::Align::Start)
-                .margin_top(4)
                 .build();
             time_label.add_css_class("caption");
             time_label.add_css_class("dim-label");
@@ -103,7 +158,6 @@ impl KronosWindow {
                 .orientation(gtk::Orientation::Horizontal)
                 .hexpand(true)
                 .valign(gtk::Align::Start)
-                .margin_top(12)
                 .build();
             separator.add_css_class("sidebar-separator");
 
