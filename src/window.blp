@@ -22,10 +22,28 @@ template $KronosWindow: Adw.ApplicationWindow {
       hexpand: true;
       vexpand: true;
 
-      Gtk.Box calendar_times_grid {
-        orientation: vertical;
-        margin-top: 12;
-        margin-bottom: 12;
+      Gtk.Overlay overlay {
+        Gtk.Box calendar_times_grid {
+          orientation: vertical;
+          margin-top: 12;
+          margin-bottom: 12;
+        }
+
+        [overlay]
+        Adw.Bin transparent_dimmer {
+          styles [
+            "overlay-box",
+          ]
+
+          halign: fill;
+          valign: center;
+          height-request: 200;
+          margin-start: 72;
+          // Optional: Add a spinner or status text inside
+          Label {
+            label: _("Hello world");
+          }
+        }
       }
     };
   };

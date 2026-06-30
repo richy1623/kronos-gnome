@@ -12,8 +12,7 @@ mod imp {
         pub window: TemplateChild<gtk::ScrolledWindow>,
         #[template_child]
         pub calendar_times_grid: TemplateChild<gtk::Box>,
-
-        pub drag_and_drop_panel: Option<gtk::Overlay>,
+        // pub drag_and_drop_panel: Option<gtk::Overlay>,
     }
 
     #[glib::object_subclass]
@@ -39,6 +38,7 @@ mod imp {
             // Fire up our custom UI logic
             self.obj().setup_internal_logic();
             self.obj().build_calendar_time_slots();
+            // self.obj().build_drag_and_drop_panel();
         }
     }
 
@@ -84,7 +84,7 @@ impl KronosWindow {
         for hour in 0..24 {
             let row_box = gtk::Box::builder()
                 .orientation(gtk::Orientation::Horizontal)
-                .height_request(60) // 60px represents exactly one hour block
+                .height_request(60)
                 .spacing(12)
                 .build();
 
@@ -112,4 +112,19 @@ impl KronosWindow {
             calendar_times_grid.append(&row_box);
         }
     }
+
+    // fn build_drag_and_drop_panel(&self) {
+    //     // 1. Get access to the private UI struct layer
+    //     let imp = self.imp();
+
+    //     // 2. Fetch the actual native GtkLabel instance
+    //     let calendar_times_grid = imp.calendar_times_grid.get();
+    //     let overlay = gtk::Overlay::builder()
+    //         .can_focus(false)
+    //         .height_request(200)
+    //         .build();
+
+    //     overlay.add_overlay(&calendar_times_grid);
+    //     // calendar_times_grid.append(&overlay);
+    // }
 }
