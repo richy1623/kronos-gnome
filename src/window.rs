@@ -2,12 +2,13 @@ use adw::subclass::prelude::*;
 use gtk::prelude::*;
 use gtk::{gio, glib};
 
-use crate::window::imp::{HOUR_HEIGHT, MINUTES_15_HEIGHT, TIME_OFFSET};
+use crate::window::imp::{DAY_HEIGHT, HOUR_HEIGHT, MINUTES_15_HEIGHT, TIME_OFFSET};
 
 mod imp {
     use super::*;
 
     pub(crate) const HOUR_HEIGHT: f64 = 60.0;
+    pub(crate) const DAY_HEIGHT: i32 = MINUTES_15_HEIGHT * 4 * 24 + TIME_OFFSET;
     pub(crate) const MINUTES_15_HEIGHT: i32 = 15;
     pub(crate) const TIME_OFFSET: i32 = 20;
 
@@ -107,13 +108,16 @@ impl KronosWindow {
                     // Snap top to use new height
                     let current_end =
                         transparent_dimmer.margin_top() + transparent_dimmer.height_request();
+                    let allowed_height = current_end - TIME_OFFSET;
+                    let height = height.min(allowed_height);
                     // Perform updates
                     transparent_dimmer.set_margin_top(current_end - height);
                     transparent_dimmer.set_height_request(height);
                 } else {
                     // Snap to next 15 minutes
                     let height = y_offset + MINUTES_15_HEIGHT - y_offset % (MINUTES_15_HEIGHT);
-                    transparent_dimmer.set_height_request(height);
+                    let allowed_height = DAY_HEIGHT - transparent_dimmer.margin_top();
+                    transparent_dimmer.set_height_request(height.min(allowed_height));
                 }
             }
         ));
