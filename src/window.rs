@@ -2,13 +2,14 @@ use adw::subclass::prelude::*;
 use gtk::prelude::*;
 use gtk::{gio, glib};
 
-use crate::window::imp::{HOUR_HEIGHT, MINUTES_15_HEIGHT};
+use crate::window::imp::{HOUR_HEIGHT, MINUTES_15_HEIGHT, TIME_OFFSET};
 
 mod imp {
     use super::*;
 
     pub(crate) const HOUR_HEIGHT: f64 = 60.0;
     pub(crate) const MINUTES_15_HEIGHT: i32 = 15;
+    pub(crate) const TIME_OFFSET: i32 = 20;
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
     #[template(resource = "/io/richard/kronos/window.ui")]
@@ -83,11 +84,15 @@ impl KronosWindow {
         drag_gesture.connect_drag_begin(glib::clone!(
             #[weak]
             transparent_dimmer,
+            #[weak]
+            window,
             move |_gesture, _x_start, y_start| {
-                let y_start = y_start as i32;
+                let y_start = y_start as i32 - TIME_OFFSET + window.vadjustment().value() as i32;
                 // Snap to earlier 15 minutes
                 let start = y_start - y_start % (MINUTES_15_HEIGHT);
-                transparent_dimmer.set_margin_top(start);
+                transparent_dimmer.set_margin_top(start + TIME_OFFSET);
+                transparent_dimmer.set_height_request(MINUTES_15_HEIGHT);
+                transparent_dimmer.set_visible(true);
             }
         ));
 
@@ -114,10 +119,10 @@ impl KronosWindow {
         ));
 
         drag_gesture.connect_drag_end(move |_gesture, _offset_x, _offset_y| {
-            let current_start_hours = transparent_dimmer.margin_top() as f64 / HOUR_HEIGHT;
-            let current_end_hours = (transparent_dimmer.margin_top()
-                + transparent_dimmer.height_request()) as f64
-                / HOUR_HEIGHT;
+            let current_start_hours =
+                (transparent_dimmer.margin_top() - TIME_OFFSET) as f64 / HOUR_HEIGHT;
+            let current_end_hours =
+                current_start_hours + transparent_dimmer.height_request() as f64 / HOUR_HEIGHT;
             println!(
                 "Publish new event: [{:02.02}-{:02.02}]",
                 current_start_hours, current_end_hours
@@ -141,7 +146,7 @@ impl KronosWindow {
             let row_box = gtk::Box::builder()
                 .orientation(gtk::Orientation::Horizontal)
                 .height_request(60)
-                .spacing(12)
+                .spacing(0)
                 .build();
 
             let label_text = format!("{:02}:00", hour);
@@ -150,6 +155,7 @@ impl KronosWindow {
                 .width_request(60)
                 .halign(gtk::Align::End)
                 .valign(gtk::Align::Start)
+                .margin_top(0)
                 .build();
             time_label.add_css_class("caption");
             time_label.add_css_class("dim-label");
@@ -158,6 +164,7 @@ impl KronosWindow {
                 .orientation(gtk::Orientation::Horizontal)
                 .hexpand(true)
                 .valign(gtk::Align::Start)
+                .margin_top(7)
                 .build();
             separator.add_css_class("sidebar-separator");
 

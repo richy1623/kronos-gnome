@@ -25,8 +25,8 @@ template $KronosWindow: Adw.ApplicationWindow {
       Gtk.Overlay overlay {
         Gtk.Box calendar_times_grid {
           orientation: vertical;
-          margin-top: 0;
-          margin-bottom: 0;
+          margin-top: 12;
+          margin-bottom: 12;
         }
 
         [overlay]
@@ -35,14 +35,10 @@ template $KronosWindow: Adw.ApplicationWindow {
             "overlay-box",
           ]
 
+          visible: false;
           halign: fill;
           valign: start;
-          height-request: 200;
           margin-start: 60;
-          // Optional: Add a spinner or status text inside
-          Label {
-            label: _("Hello world");
-          }
         }
       }
     };
